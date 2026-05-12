@@ -20,7 +20,8 @@ export function formatValue(
   const formatted = renderSection(section, value, locale);
   // For single-section numeric formats, prepend the minus sign here.
   // Multi-section formats handle sign via section selection.
-  if (ast.sections.length === 1 && typeof value === "number" && value < 0) {
+  const isNegative = (typeof value === "number" && value < 0) || (typeof value === "bigint" && value < 0n);
+  if (ast.sections.length === 1 && isNegative) {
     return "-" + formatted;
   }
   return formatted;
@@ -102,6 +103,9 @@ function renderSection(
     return formatText(section, String(value));
   }
 
-  const num = typeof value === "bigint" ? Number(value) : value as number;
+  if (typeof value === "bigint") {
+    return formatNumeric(section, value < 0n ? -value : value, locale);
+  }
+  const num = value as number;
   return formatNumeric(section, Math.abs(num), locale);
 }

@@ -4,8 +4,19 @@ import type { SheetLocale } from "../locale/types.js";
 type DigitPart = Extract<FormatPart, { kind: "digit" }>;
 type SciPart = Extract<FormatPart, { kind: "scientific" }>;
 
-export function formatNumeric(section: FormatSection, absValue: number, locale: SheetLocale): string {
+export function formatNumeric(section: FormatSection, absValue: number | bigint, locale: SheetLocale): string {
   const parts = section.parts;
+
+  // Bigint: use string representation to preserve precision; no scaling/percent/fraction/scientific
+  if (typeof absValue === "bigint") {
+    const intStr = absValue.toString();
+    const decimalIdx = parts.findIndex(p => p.kind === "decimal");
+    const intParts = decimalIdx === -1 ? parts : parts.slice(0, decimalIdx);
+    const scalingCommas = countScalingCommas(parts);
+    const hasGrouping = (parts.filter(p => p.kind === "group").length - scalingCommas) > 0;
+    const intFormatted = formatInteger(intStr, intParts, hasGrouping, locale);
+    return wrapWithLiterals(parts, intFormatted);
+  }
 
   if (parts.some(p => p.kind === "scientific")) {
     return formatScientific(absValue, parts, locale);
