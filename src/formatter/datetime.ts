@@ -11,7 +11,19 @@ export function formatDateTime(section: FormatSection, date: Date, locale: Sheet
 
     if (p.kind === "literal") { result += p.value; continue; }
     if (p.kind === "padding" || p.kind === "fill") continue;
+    if (p.kind === "group") { result += ","; continue; }
     if (p.kind === "elapsed") { result += formatElapsed(p.unit, date); continue; }
+    // decimal followed by digit parts = fractional seconds (milliseconds)
+    if (p.kind === "decimal") {
+      let j = i + 1;
+      let digits = 0;
+      while (j < parts.length && parts[j].kind === "digit") { digits++; j++; }
+      if (digits > 0) {
+        result += "." + String(date.getMilliseconds()).padStart(3, "0").slice(0, digits);
+        i = j - 1;
+      }
+      continue;
+    }
     if (p.kind !== "date") continue;
 
     const isMinute = (p.token === "m" || p.token === "mm")
