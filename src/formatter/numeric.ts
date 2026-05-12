@@ -213,6 +213,7 @@ function countScalingCommas(parts: FormatPart[]): number {
 
 function formatInteger(intStr: string, intParts: FormatPart[], hasGrouping: boolean, locale: SheetLocale): string {
   const digitParts = intParts.filter(p => p.kind === "digit") as DigitPart[];
+  if (digitParts.length === 0) return "";
   const zeroCount = digitParts.filter(p => p.char === "0").length;
   const hashCount = digitParts.filter(p => p.char === "#").length;
   const spaceCount = digitParts.filter(p => p.char === "?").length;
