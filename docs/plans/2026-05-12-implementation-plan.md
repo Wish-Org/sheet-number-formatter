@@ -10,6 +10,26 @@
 
 ---
 
+## Progress
+
+- [x] Task 1: Project scaffolding
+- [x] Task 2: AST types
+- [x] Task 3: ParseError
+- [x] Task 4: SheetLocale interface and enUS built-in
+- [x] Task 5: localeFromIntl helper
+- [x] Task 6: Lexer
+- [x] Task 7: Parser
+- [x] Task 8: Text formatter
+- [x] Task 9: Numeric formatter — basic
+- [x] Task 10: Numeric formatter — scientific notation and fractions
+- [x] Task 11: Date/time formatter
+- [x] Task 12: Section selector and top-level format dispatcher
+- [ ] Task 13: SheetNumberFormatter class and public exports
+- [ ] Task 14: Port .NET ExcelNumberFormat test corpus
+- [ ] Task 15: Run full test suite and build
+
+---
+
 ## Task 1: Project scaffolding
 
 **Files:**
