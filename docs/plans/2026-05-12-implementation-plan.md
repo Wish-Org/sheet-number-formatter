@@ -24,9 +24,9 @@
 - [x] Task 10: Numeric formatter — scientific notation and fractions
 - [x] Task 11: Date/time formatter
 - [x] Task 12: Section selector and top-level format dispatcher
-- [ ] Task 13: SheetNumberFormatter class and public exports
-- [ ] Task 14: Port .NET ExcelNumberFormat test corpus
-- [ ] Task 15: Run full test suite and build
+- [x] Task 13: SheetNumberFormatter class and public exports
+- [x] Task 14: Port .NET ExcelNumberFormat test corpus
+- [x] Task 15: Run full test suite and build
 
 ---
 
