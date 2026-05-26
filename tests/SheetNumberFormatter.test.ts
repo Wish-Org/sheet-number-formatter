@@ -3,30 +3,43 @@ import { SheetNumberFormatter, enUS, localeFromIntl, ParseError } from "../src/i
 
 const snf = new SheetNumberFormatter();
 
-describe("SheetNumberFormatter.format", () => {
+describe("SheetNumberFormatter.compile — success", () => {
   it("formats a number", () => {
-    expect(snf.format(12345.6, "###,##0.00", enUS)).toBe("12,345.60");
+    const result = snf.compile("###,##0.00");
+    expect(result.isSuccess).toBe(true);
+    if (result.isSuccess) expect(result.formatter.format(12345.6, enUS)).toBe("12,345.60");
   });
 
   it("formats a date", () => {
-    const d = new Date(2024, 2, 15);
-    expect(snf.format(d, "yyyy-mm-dd", enUS)).toBe("2024-03-15");
+    const result = snf.compile("yyyy-mm-dd");
+    expect(result.isSuccess).toBe(true);
+    if (result.isSuccess) expect(result.formatter.format(new Date(2024, 2, 15), enUS)).toBe("2024-03-15");
   });
 
   it("formats a bigint", () => {
-    expect(snf.format(9007199254740993n, "0", enUS)).toBe("9007199254740993");
+    const result = snf.compile("0");
+    expect(result.isSuccess).toBe(true);
+    if (result.isSuccess) expect(result.formatter.format(9007199254740993n, enUS)).toBe("9007199254740993");
   });
 
-  it("throws ParseError for invalid format", () => {
-    expect(() => snf.format(1, '"unclosed', enUS)).toThrow(ParseError);
+  it("reuses compiled formatter efficiently", () => {
+    const result = snf.compile("0.00");
+    expect(result.isSuccess).toBe(true);
+    if (result.isSuccess) {
+      expect(result.formatter.format(1.5, enUS)).toBe("1.50");
+      expect(result.formatter.format(2.0, enUS)).toBe("2.00");
+    }
   });
 });
 
-describe("SheetNumberFormatter.compile", () => {
-  it("returns a CompiledFormatter that formats correctly", () => {
-    const compiled = snf.compile("0.00");
-    expect(compiled.format(1.5, enUS)).toBe("1.50");
-    expect(compiled.format(2.0, enUS)).toBe("2.00");
+describe("SheetNumberFormatter.compile — failure", () => {
+  it("returns isSuccess false for invalid format", () => {
+    const result = snf.compile('"unclosed');
+    expect(result.isSuccess).toBe(false);
+    if (!result.isSuccess) {
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toBeInstanceOf(ParseError);
+    }
   });
 });
 

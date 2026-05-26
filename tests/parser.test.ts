@@ -77,7 +77,7 @@ describe("parse", () => {
     const ast = parse("[h]:mm:ss");
     expect(ast.kind).toBe("sections");
     if (ast.kind !== "sections") return;
-    expect(ast.sections[0].parts[0]).toEqual({ kind: "elapsed", unit: "h" });
+    expect(ast.sections[0].parts[0]).toEqual({ kind: "elapsed", unit: "h", digits: 1 });
   });
 
   it("parses literal text", () => {

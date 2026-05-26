@@ -1,21 +1,32 @@
 import { parse } from "./parser/parse.js";
 import { formatValue } from "./formatter/format.js";
+import { ParseError } from "./errors.js";
 import type { SheetLocale } from "./locale/types.js";
 
 export interface CompiledFormatter {
-  format(value: number | bigint | Date | string, locale: SheetLocale): string;
+  format(value: number | bigint | Date, locale: SheetLocale): string;
 }
 
-export class SheetNumberFormatter {
-  format(value: number | bigint | Date | string, formatString: string | null | undefined, locale: SheetLocale): string {
-    return formatValue(value, formatString, locale);
-  }
+export type CompileResult =
+  | { isSuccess: true;  formatter: CompiledFormatter }
+  | { isSuccess: false; errors: ParseError[] };
 
-  compile(formatString: string): CompiledFormatter {
-    parse(formatString); // parse once to validate and catch errors early
-    return {
-      format: (value: number | bigint | Date | string, locale: SheetLocale) =>
-        formatValue(value, formatString, locale),
-    };
+export class SheetNumberFormatter {
+  compile(formatString: string): CompileResult {
+    try {
+      const ast = parse(formatString);
+      return {
+        isSuccess: true,
+        formatter: {
+          format: (value: number | bigint | Date, locale: SheetLocale) =>
+            formatValue(value, ast, locale),
+        },
+      };
+    } catch (e) {
+      return {
+        isSuccess: false,
+        errors: [e instanceof ParseError ? e : new ParseError(String(e), formatString, 0)],
+      };
+    }
   }
 }

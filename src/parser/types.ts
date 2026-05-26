@@ -29,8 +29,8 @@ export type FormatPart =
   | { kind: "percent" }
   | { kind: "scientific"; forceSign: boolean; digits: string }
   | { kind: "fraction"; numerator: string; denominator: string | number }
-  | { kind: "date"; token: DateToken }
-  | { kind: "elapsed"; unit: "h" | "m" | "s" }
+  | { kind: "date"; token: DateToken; lowerCase?: boolean }
+  | { kind: "elapsed"; unit: "h" | "m" | "s"; digits: number }
   | { kind: "text-placeholder" }
   | { kind: "literal"; value: string }
   | { kind: "padding"; char: string }

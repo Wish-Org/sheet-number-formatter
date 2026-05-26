@@ -86,7 +86,7 @@ function buildSection(tokens: Token[]): FormatSection {
       continue;
     }
     if (tok.type === "elapsed") {
-      parts.push({ kind: "elapsed", unit: tok.unit });
+      parts.push({ kind: "elapsed", unit: tok.unit, digits: tok.digits });
       continue;
     }
     if (tok.type === "scientific") {
@@ -100,7 +100,7 @@ function buildSection(tokens: Token[]): FormatSection {
         continue;
       }
       if (lc === "a/p") {
-        parts.push({ kind: "date", token: "ap" });
+        parts.push({ kind: "date", token: "ap", lowerCase: tok.token[0] !== tok.token[0].toUpperCase() });
         continue;
       }
       parts.push({ kind: "date", token: lc as DateToken });

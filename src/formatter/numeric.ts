@@ -107,7 +107,7 @@ function formatScientific(absValue: number, parts: FormatPart[], locale: SheetLo
 
 // ── Fraction display ─────────────────────────────────────────────────────────
 
-function formatFractionDisplay(absValue: number, parts: FormatPart[], locale: SheetLocale): string {
+function formatFractionDisplay(absValue: number, parts: FormatPart[], _locale: SheetLocale): string {
   const slashIdx = parts.findIndex(p => p.kind === "literal" && p.value === "/");
 
   // Collect numerator digits (consecutive digits immediately before "/")
@@ -126,12 +126,31 @@ function formatFractionDisplay(absValue: number, parts: FormatPart[], locale: Sh
     i--;
   }
 
-  // Denominator: digit placeholders OR a fixed integer literal
+  // Denominator: digit placeholders OR a fixed integer literal.
+  // Fixed: starts with a numeric literal char (1-9), may be followed by "0" digit tokens.
+  //   e.g. /16 → literal("1")+literal("6"), /10 → literal("1")+digit("0"), /100 → literal("1")+digit("0")+digit("0")
+  // Variable: starts with "?", "#", or "0" digit tokens (format placeholders).
   let denomFixed: number | null = null;
   const denomDigits: DigitPart[] = [];
   let j = slashIdx + 1;
-  if (j < parts.length && parts[j].kind === "literal") {
-    const n = parseInt((parts[j] as Extract<FormatPart, { kind: "literal" }>).value, 10);
+  const startsWithNumericLiteral = j < parts.length &&
+    parts[j].kind === "literal" &&
+    /^\d+$/.test((parts[j] as Extract<FormatPart, { kind: "literal" }>).value);
+  if (startsWithNumericLiteral) {
+    let fixedStr = "";
+    while (j < parts.length) {
+      const p = parts[j];
+      if (p.kind === "literal" && /^\d+$/.test((p as Extract<FormatPart, { kind: "literal" }>).value)) {
+        fixedStr += (p as Extract<FormatPart, { kind: "literal" }>).value;
+        j++;
+      } else if (p.kind === "digit" && (p as DigitPart).char === "0") {
+        fixedStr += "0";
+        j++;
+      } else {
+        break;
+      }
+    }
+    const n = parseInt(fixedStr, 10);
     if (!isNaN(n)) denomFixed = n;
   } else {
     while (j < parts.length && parts[j].kind === "digit") {
@@ -167,29 +186,49 @@ function formatFractionDisplay(absValue: number, parts: FormatPart[], locale: Sh
     }
 
     // Collect separator literals between whole and numerator
-    let k = wholeDigits.length > 0 ? i + 1 : 0;
-    // Find literals between last whole digit position and first numerator digit
     const sepStart = parts.indexOf(wholeDigits[wholeDigits.length - 1] as FormatPart) + 1;
     const sepEnd = parts.indexOf(numeratorDigits[0] as FormatPart);
     for (let s = sepStart; s < sepEnd; s++) {
       if (parts[s].kind === "literal") result += (parts[s] as Extract<FormatPart, { kind: "literal" }>).value;
     }
+
+    // When fraction is zero, fill fraction section with spaces instead of showing 0/1
+    if (num === 0) {
+      const numWidth = numeratorDigits.length;
+      const denWidth = denomFixed !== null
+        ? den.toString().length
+        : denomDigits.length;
+      result += " ".repeat(numWidth + 1 + denWidth);
+      return result;
+    }
   }
 
-  // Format numerator
-  const numStr = num.toString();
+  // Format numerator with ? left-padding (right-align) and 0 zero-padding
   const numZeros = numeratorDigits.filter(d => d.char === "0").length;
-  result += numStr.padStart(numZeros, "0");
+  const numSpaces = numeratorDigits.filter(d => d.char === "?").length;
+  const numWidth = numZeros + numSpaces;
+  const numStr = num.toString().padStart(numZeros, "0");
+  if (numSpaces > 0 && numStr.length < numWidth) {
+    result += " ".repeat(numWidth - numStr.length) + numStr;
+  } else {
+    result += numStr;
+  }
 
   result += "/";
 
-  // Format denominator
+  // Format denominator with 0 zero-padding and ? right-padding (left-align)
   if (denomFixed !== null) {
     result += den.toString();
   } else {
-    const denStr = den.toString();
     const denZeros = denomDigits.filter(d => d.char === "0").length;
-    result += denStr.padStart(denZeros, "0");
+    const denSpaces = denomDigits.filter(d => d.char === "?").length;
+    const denWidth = denZeros + denSpaces;
+    const denStr = den.toString().padStart(denZeros, "0");
+    if (denSpaces > 0 && denStr.length < denWidth) {
+      result += denStr + " ".repeat(denWidth - denStr.length);
+    } else {
+      result += denStr;
+    }
   }
 
   return result;
@@ -238,6 +277,11 @@ function formatInteger(intStr: string, intParts: FormatPart[], hasGrouping: bool
   if (parseInt(s.replace(/,/g, ""), 10) === 0 && zeroCount === 0) {
     if (spaceCount > 0) return " ".repeat(spaceCount);
     if (hashCount > 0) return "";
+  }
+
+  if (spaceCount > 0) {
+    const minWidth = zeroCount + spaceCount;
+    if (s.length < minWidth) s = " ".repeat(minWidth - s.length) + s;
   }
 
   return s;

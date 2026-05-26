@@ -6,13 +6,25 @@ export function formatDateTime(section: FormatSection, date: Date, locale: Sheet
   const hasAmPm = parts.some(p => p.kind === "date" && (p.token === "ampm" || p.token === "ap"));
 
   let result = "";
+  let prevWasGroup = false;
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i];
 
-    if (p.kind === "literal") { result += p.value; continue; }
-    if (p.kind === "padding" || p.kind === "fill") continue;
-    if (p.kind === "group") { result += ","; continue; }
-    if (p.kind === "elapsed") { result += formatElapsed(p.unit, date); continue; }
+    if (p.kind === "literal") {
+      // Replace date separator "/" with locale-specific character
+      result += p.value === "/" ? locale.dateSeparator : p.value;
+      prevWasGroup = false;
+      continue;
+    }
+    if (p.kind === "padding" || p.kind === "fill") { prevWasGroup = false; continue; }
+    if (p.kind === "group") {
+      // Consecutive commas in date formats collapse to one literal comma
+      if (!prevWasGroup) result += ",";
+      prevWasGroup = true;
+      continue;
+    }
+    prevWasGroup = false;
+    if (p.kind === "elapsed") { result += formatElapsed(p.unit, p.digits, date); continue; }
     // decimal followed by digit parts = fractional seconds (milliseconds)
     if (p.kind === "decimal") {
       let j = i + 1;
@@ -30,7 +42,7 @@ export function formatDateTime(section: FormatSection, date: Date, locale: Sheet
       ? isAdjacentToHourOrSecond(parts, i)
       : false;
 
-    result += formatDateToken(p.token, date, locale, hasAmPm, isMinute);
+    result += formatDateToken(p.token, date, locale, hasAmPm, isMinute, p.lowerCase);
   }
   return result;
 }
@@ -40,6 +52,7 @@ function isAdjacentToHourOrSecond(parts: FormatPart[], idx: number): boolean {
     const p = parts[j];
     if (p.kind === "literal") continue;
     if (p.kind === "date" && (p.token === "h" || p.token === "hh")) return true;
+    if (p.kind === "elapsed" && p.unit === "h") return true;
     break;
   }
   for (let j = idx + 1; j < parts.length; j++) {
@@ -57,6 +70,7 @@ function formatDateToken(
   locale: SheetLocale,
   hasAmPm: boolean,
   isMinute: boolean,
+  lowerCase?: boolean,
 ): string {
   const y = date.getFullYear();
   const mo = date.getMonth();
@@ -86,13 +100,16 @@ function formatDateToken(
     case "ss":   return pad2(sec);
     case "s":    return String(sec);
     case "ampm": return h24 < 12 ? locale.amLabel : locale.pmLabel;
-    case "ap":   return h24 < 12 ? locale.amLabel[0] : locale.pmLabel[0];
+    case "ap": {
+      const ch = h24 < 12 ? "a" : "p";
+      return lowerCase ? ch : ch.toUpperCase();
+    }
     case "fracSeconds": return String(ms).padStart(3, "0");
     default:     return "";
   }
 }
 
-function formatElapsed(unit: "h" | "m" | "s", date: Date): string {
+function formatElapsed(unit: "h" | "m" | "s", digits: number, date: Date): string {
   const totalMs = date.getTime();
   const negative = totalMs < 0;
   const abs = Math.abs(totalMs);
@@ -100,7 +117,7 @@ function formatElapsed(unit: "h" | "m" | "s", date: Date): string {
   if (unit === "h") val = Math.floor(abs / 3600000);
   else if (unit === "m") val = Math.floor(abs / 60000);
   else val = Math.floor(abs / 1000);
-  return (negative ? "-" : "") + String(val);
+  return (negative ? "-" : "") + String(val).padStart(digits, "0");
 }
 
 function pad2(n: number): string {

@@ -11,7 +11,7 @@ export type Token =
   | { type: "padding"; char: string; pos: number }
   | { type: "fill"; char: string; pos: number }
   | { type: "date-token"; token: string; pos: number }
-  | { type: "elapsed"; unit: "h" | "m" | "s"; pos: number }
+  | { type: "elapsed"; unit: "h" | "m" | "s"; digits: number; pos: number }
   | { type: "condition"; operator: ">" | ">=" | "<" | "<=" | "=" | "<>"; value: number; pos: number }
   | { type: "color"; value: string; pos: number }
   | { type: "currency"; symbol: string; pos: number }
@@ -56,9 +56,9 @@ export function tokenize(fmt: string): Token[] {
 
       const lc = inner.toLowerCase();
 
-      if (/^h+$/.test(lc)) { tokens.push({ type: "elapsed", unit: "h", pos: bracketPos }); continue; }
-      if (/^m+$/.test(lc)) { tokens.push({ type: "elapsed", unit: "m", pos: bracketPos }); continue; }
-      if (/^s+$/.test(lc)) { tokens.push({ type: "elapsed", unit: "s", pos: bracketPos }); continue; }
+      if (/^h+$/.test(lc)) { tokens.push({ type: "elapsed", unit: "h", digits: lc.length, pos: bracketPos }); continue; }
+      if (/^m+$/.test(lc)) { tokens.push({ type: "elapsed", unit: "m", digits: lc.length, pos: bracketPos }); continue; }
+      if (/^s+$/.test(lc)) { tokens.push({ type: "elapsed", unit: "s", digits: lc.length, pos: bracketPos }); continue; }
 
       if (inner.startsWith("$")) {
         const dashIdx = inner.indexOf("-", 1);
@@ -92,14 +92,14 @@ export function tokenize(fmt: string): Token[] {
       continue;
     }
 
-    // AM/PM (case-insensitive)
+    // AM/PM (case-insensitive) — store original slice to preserve case
     if (fmt.slice(i, i + 5).toLowerCase() === "am/pm") {
-      tokens.push({ type: "date-token", token: "am/pm", pos });
+      tokens.push({ type: "date-token", token: fmt.slice(i, i + 5), pos });
       i += 5;
       continue;
     }
     if (fmt.slice(i, i + 3).toLowerCase() === "a/p") {
-      tokens.push({ type: "date-token", token: "a/p", pos });
+      tokens.push({ type: "date-token", token: fmt.slice(i, i + 3), pos });
       i += 3;
       continue;
     }

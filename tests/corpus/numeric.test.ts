@@ -1,8 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { SheetNumberFormatter, enUS } from "../../src/index.js";
+import { SheetNumberFormatter, enUS, localeFromIntl } from "../../src/index.js";
+import type { SheetLocale } from "../../src/index.js";
 
 const snf = new SheetNumberFormatter();
-const f = (fmt: string, v: number) => snf.format(v, fmt, enUS);
+const f = (fmt: string, v: number) => {
+  const r = snf.compile(fmt);
+  if (!r.isSuccess) throw r.errors[0];
+  return r.formatter.format(v, enUS);
+};
+const fl = (fmt: string, v: number, locale: SheetLocale) => {
+  const r = snf.compile(fmt);
+  if (!r.isSuccess) throw r.errors[0];
+  return r.formatter.format(v, locale);
+};
 
 // Ported from .NET ExcelNumberFormat TestComma and TestThousandSeparator
 
@@ -39,4 +49,46 @@ describe("thousand separator explicit zeros", () => {
   it("0,000,000.00 | 1469.07 → 0,001,469.07", () => {
     expect(f("0,000,000.00", 1469.07)).toBe("0,001,469.07");
   });
+});
+
+// ─── ? digit alignment ───────────────────────────────────────────────────────
+
+type NumberRow = [number, string, string, string, string, string];
+const numberCases: NumberRow[] = [
+  [0.0,   " . ",  "  .  ", "   .   ", "   . 0 ", "   .  "],
+  [0.1,   " .1",  "  .1 ", "   .1  ", "   .10 ", "   .1 "],
+  [0.12,  " .1",  "  .12", "   .12 ", "   .12 ", "   .12 "],
+  [0.123, " .1",  "  .12", "   .123", "   .123", "   .123"],
+  [1.0,   "1. ",  " 1.  ", "  1.   ", "  1. 0 ", "  1.  "],
+  [1.1,   "1.1",  " 1.1 ", "  1.1  ", "  1.10 ", "  1.1 "],
+  [1.12,  "1.1",  " 1.12", "  1.12 ", "  1.12 ", "  1.12 "],
+  [1.123, "1.1",  " 1.12", "  1.123", "  1.123", "  1.123"],
+];
+
+describe("digit alignment with ? placeholder", () => {
+  for (const [v, e1, e2, e3, e4, e5] of numberCases) {
+    it(`?.?    | ${v} → "${e1}"`, () => expect(f("?.?",     v)).toBe(e1));
+    it(`??.??  | ${v} → "${e2}"`, () => expect(f("??.??",   v)).toBe(e2));
+    it(`???.???| ${v} → "${e3}"`, () => expect(f("???.???", v)).toBe(e3));
+    it(`???.?0?| ${v} → "${e4}"`, () => expect(f("???.?0?", v)).toBe(e4));
+    it(`???.?#?| ${v} → "${e5}"`, () => expect(f("???.?#?", v)).toBe(e5));
+  }
+});
+
+// ─── culture-specific separators ─────────────────────────────────────────────
+
+describe("thousand separator — locale", () => {
+  it("da-DK: 0,000,000.00 | 1469.07 → '0.001.469,07'", () => {
+    expect(fl("0,000,000.00", 1469.07, localeFromIntl("da-DK"))).toBe("0.001.469,07");
+  });
+});
+
+// ─── currency ────────────────────────────────────────────────────────────────
+
+describe("currency", () => {
+  // [$€-1809]# ##0.00 uses space as thousands separator (not yet supported)
+  it.todo('[$€-1809]# ##0.00 | 1234.56 → "€1 234.56"');
+
+  it('#,##0.00 [$EUR] | 1234.56 → "1,234.56 EUR"', () =>
+    expect(f("#,##0.00 [$EUR]", 1234.56)).toBe("1,234.56 EUR"));
 });

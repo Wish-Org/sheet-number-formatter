@@ -2,7 +2,11 @@ import { describe, it, expect } from "vitest";
 import { SheetNumberFormatter, enUS } from "../../src/index.js";
 
 const snf = new SheetNumberFormatter();
-const f = (fmt: string, v: number) => snf.format(v, fmt, enUS);
+const f = (fmt: string, v: number) => {
+  const r = snf.compile(fmt);
+  if (!r.isSuccess) throw r.errors[0];
+  return r.formatter.format(v, enUS);
+};
 
 // Ported from .NET ExcelNumberFormat TestExponent
 // Format columns: #0.0E+0 | ##0.0E+0 | ###0.0E+0 | ####0.0E+0
@@ -38,6 +42,26 @@ const cases: Row[] = [
 
 describe("scientific notation corpus", () => {
   for (const [value, e1, e2, e3, e4] of cases) {
+    it(`#0.0E+0 | ${value} → ${e1}`, () => expect(f("#0.0E+0", value)).toBe(e1));
+    it(`##0.0E+0 | ${value} → ${e2}`, () => expect(f("##0.0E+0", value)).toBe(e2));
+    it(`###0.0E+0 | ${value} → ${e3}`, () => expect(f("###0.0E+0", value)).toBe(e3));
+    it(`####0.0E+0 | ${value} → ${e4}`, () => expect(f("####0.0E+0", value)).toBe(e4));
+  }
+});
+
+// Rows 26-32 from ExcelNumberFormat TestExponent (large values)
+const largeCases: Row[] = [
+  [123456789000,       "12.3E+10",  "123.5E+9",   "1234.6E+8",  "12.3E+10"],
+  [1234567890000,      "1.2E+12",   "1.2E+12",    "1.2E+12",    "123.5E+10"],
+  [12345678900000,     "12.3E+12",  "12.3E+12",   "12.3E+12",   "1234.6E+10"],
+  [123456789000000,    "1.2E+14",   "123.5E+12",  "123.5E+12",  "12345.7E+10"],
+  [1234567890000000,   "12.3E+14",  "1.2E+15",    "1234.6E+12", "1.2E+15"],
+  [1.234567890e16,     "1.2E+16",   "12.3E+15",   "1.2E+16",    "12.3E+15"],
+  [1.23456789e17,      "12.3E+16",  "123.5E+15",  "12.3E+16",   "123.5E+15"],
+];
+
+describe("scientific notation — large values", () => {
+  for (const [value, e1, e2, e3, e4] of largeCases) {
     it(`#0.0E+0 | ${value} → ${e1}`, () => expect(f("#0.0E+0", value)).toBe(e1));
     it(`##0.0E+0 | ${value} → ${e2}`, () => expect(f("##0.0E+0", value)).toBe(e2));
     it(`###0.0E+0 | ${value} → ${e3}`, () => expect(f("###0.0E+0", value)).toBe(e3));

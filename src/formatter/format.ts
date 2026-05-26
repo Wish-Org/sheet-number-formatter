@@ -3,23 +3,21 @@ import type { FormatAST, FormatSection } from "../parser/types.js";
 import type { SheetLocale } from "../locale/types.js";
 import { formatNumeric } from "./numeric.js";
 import { formatDateTime } from "./datetime.js";
-import { formatText } from "./text.js";
+
+export { parse };
 
 export function formatValue(
-  value: number | bigint | Date | string,
-  formatString: string | null | undefined,
+  value: number | bigint | Date,
+  ast: FormatAST,
   locale: SheetLocale,
 ): string {
-  const ast = parse(formatString);
-
   if (ast.kind === "general") {
     return formatGeneral(value, locale);
   }
 
-  const section = selectSection(ast, value);
+  const { section, addMinus } = selectSection(ast, value);
   const formatted = renderSection(section, value, locale);
-  // For single-section numeric formats, prepend the minus sign here.
-  // Multi-section formats handle sign via section selection.
+  if (addMinus) return "-" + formatted;
   const isNegative = (typeof value === "number" && value < 0) || (typeof value === "bigint" && value < 0n);
   if (ast.sections.length === 1 && isNegative) {
     return "-" + formatted;
@@ -27,7 +25,7 @@ export function formatValue(
   return formatted;
 }
 
-function formatGeneral(value: number | bigint | Date | string, locale: SheetLocale): string {
+function formatGeneral(value: number | bigint | Date, locale: SheetLocale): string {
   if (value instanceof Date) {
     const d = value.getDate();
     const mon = locale.shortMonthNames[value.getMonth()];
@@ -35,43 +33,53 @@ function formatGeneral(value: number | bigint | Date | string, locale: SheetLoca
     return `${d}-${mon}-${y}`;
   }
   if (typeof value === "bigint") return value.toString();
-  if (typeof value === "number") return String(value);
   return String(value);
 }
 
 function selectSection(
   ast: FormatAST & { kind: "sections" },
-  value: number | bigint | Date | string,
-): FormatSection {
+  value: number | bigint | Date,
+): { section: FormatSection; addMinus: boolean } {
   const sections = ast.sections;
-
-  const conditionals = sections.filter(s => s.condition != null);
-  if (conditionals.length > 0) {
-    const num = typeof value === "bigint" ? Number(value) : typeof value === "number" ? value : NaN;
-    for (const s of conditionals) {
-      if (evalCondition(s.condition!, num)) return s;
-    }
-    const unconditional = sections.filter(s => s.condition == null);
-    return unconditional[unconditional.length - 1] ?? sections[sections.length - 1];
-  }
-
   const n = sections.length;
-  if (n === 1) return sections[0];
 
-  if (typeof value === "string") return n >= 4 ? sections[3] : sections[0];
-  if (value instanceof Date) return sections[0];
+  const hasSomeCondition = sections.some(s => s.condition != null);
 
-  const num = typeof value === "bigint" ? Number(value) : value as number;
-  if (n === 2) return num < 0 ? sections[1] : sections[0];
-  if (n === 3) {
-    if (num > 0) return sections[0];
-    if (num < 0) return sections[1];
-    return sections[2];
+  if (!hasSomeCondition) {
+    if (n === 1) return { section: sections[0], addMinus: false };
+    if (value instanceof Date) return { section: sections[0], addMinus: false };
+    const num = typeof value === "bigint" ? Number(value) : value as number;
+    if (n === 2) return { section: num < 0 ? sections[1] : sections[0], addMinus: false };
+    if (num > 0) return { section: sections[0], addMinus: false };
+    if (num < 0) return { section: sections[1], addMinus: false };
+    return { section: sections[2], addMinus: false };
   }
-  // n === 4
-  if (num > 0) return sections[0];
-  if (num < 0) return sections[1];
-  return sections[2];
+
+  // Mixed conditional/unconditional sections
+  const num = typeof value === "bigint" ? Number(value) : typeof value === "number" ? value : NaN;
+
+  // Unconditional section 0 always handles positive values
+  if (num > 0 && sections[0].condition == null) {
+    return { section: sections[0], addMinus: false };
+  }
+
+  // Check conditional sections in order
+  for (const s of sections) {
+    if (s.condition != null && evalCondition(s.condition, num)) {
+      return { section: s, addMinus: false };
+    }
+  }
+
+  // Fallback: last non-text unconditional section; prepend minus only if it's a 3rd+ section
+  let fallbackIdx = sections.length - 1;
+  for (let i = sections.length - 1; i >= 0; i--) {
+    if (sections[i].condition == null && !sections[i].parts.some(p => p.kind === "text-placeholder")) {
+      fallbackIdx = i;
+      break;
+    }
+  }
+
+  return { section: sections[fallbackIdx], addMinus: num < 0 && fallbackIdx >= 2 };
 }
 
 function evalCondition(cond: { operator: string; value: number }, num: number): boolean {
@@ -88,24 +96,18 @@ function evalCondition(cond: { operator: string; value: number }, num: number): 
 
 function renderSection(
   section: FormatSection,
-  value: number | bigint | Date | string,
+  value: number | bigint | Date,
   locale: SheetLocale,
 ): string {
   const hasDate = section.parts.some(p => p.kind === "date" || p.kind === "elapsed");
-  const hasText = section.parts.some(p => p.kind === "text-placeholder");
 
   if (value instanceof Date || hasDate) {
     const date = value instanceof Date ? value : new Date(Number(value) * 86400000);
     return formatDateTime(section, date, locale);
   }
 
-  if (typeof value === "string" || hasText) {
-    return formatText(section, String(value));
-  }
-
   if (typeof value === "bigint") {
     return formatNumeric(section, value < 0n ? -value : value, locale);
   }
-  const num = value as number;
-  return formatNumeric(section, Math.abs(num), locale);
+  return formatNumeric(section, Math.abs(value), locale);
 }

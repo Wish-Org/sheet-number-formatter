@@ -73,13 +73,13 @@ describe("tokenize", () => {
 
   it("tokenizes elapsed time [h]", () => {
     expect(tokenize("[h]")).toEqual<Token[]>([
-      { type: "elapsed", unit: "h", pos: 0 },
+      { type: "elapsed", unit: "h", digits: 1, pos: 0 },
     ]);
   });
 
   it("tokenizes elapsed time [mm]", () => {
     expect(tokenize("[mm]")).toEqual<Token[]>([
-      { type: "elapsed", unit: "m", pos: 0 },
+      { type: "elapsed", unit: "m", digits: 2, pos: 0 },
     ]);
   });
 
