@@ -68,31 +68,15 @@ jobs:
 
       - run: npm run build
 
-      - name: Debug npm auth
-        run: |
-          echo "=== node version ==="
-          node --version
-          echo "=== npm version ==="
-          npm --version
-          echo "=== userconfig ==="
-          cat "$(npm config get userconfig)" || echo "(none)"
-          echo "=== globalconfig ==="
-          cat "$(npm config get globalconfig)" || echo "(none)"
-          echo "=== project .npmrc ==="
-          cat .npmrc || echo "(none)"
-          echo "=== OIDC env vars ==="
-          [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ]   && echo "ACTIONS_ID_TOKEN_REQUEST_URL: SET"   || echo "ACTIONS_ID_TOKEN_REQUEST_URL: NOT SET"
-          [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ] && echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: SET" || echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: NOT SET"
-
       - name: Publish to npm
-        run: npm publish --provenance --access public --loglevel silly 2>&1 | head -200
+        run: npm publish --provenance --access public
 
       - name: Commit and tag
         run: |
           git add package.json package-lock.json
           git commit -m "chore: release v${{ steps.pkg.outputs.version }}"
           git tag "v${{ steps.pkg.outputs.version }}"
-          git push --follow-tags
+          git push origin HEAD "v${{ steps.pkg.outputs.version }}"
 
       - name: Create GitHub Release
         env:
