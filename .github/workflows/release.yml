@@ -37,6 +37,12 @@ jobs:
           cache: npm
           registry-url: 'https://registry.npmjs.org'
 
+      # setup-node writes _authToken=${NODE_AUTH_TOKEN} into .npmrc
+      # With no token set, this empty value blocks OIDC Trusted Publishers.
+      # Remove it so npm falls through to OIDC for authentication.
+      - name: Clear auth token from npmrc
+        run: npm config delete "//registry.npmjs.org/:_authToken"
+
       - run: npm ci
 
       - name: Configure git
