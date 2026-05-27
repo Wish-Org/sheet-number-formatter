@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# Only one release job at a time
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    environment: npm  # ties this job to the "npm" Trusted Publisher environment
+    permissions:
+      contents: write       # push version bump commit + tags
+      pull-requests: write  # open/update the Release PR
+      id-token: write       # request OIDC token for npm Trusted Publishers
+    steps:
+      - uses: actions/checkout@v4
+        # Full history needed so changesets can diff tags correctly
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Create Release PR or Publish to npm
+        uses: changesets/action@v1
+        with:
+          # Command run when the Release PR is merged
+          publish: npm publish
+          # Optional: customise the PR title / commit message
+          title: "chore: release packages"
+          commit: "chore: release packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
