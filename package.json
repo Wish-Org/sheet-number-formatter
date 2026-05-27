@@ -14,16 +14,16 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wish-Org/sheet-number-formatter"
+  },
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "npm run build && npm publish"
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
