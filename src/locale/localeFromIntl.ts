@@ -4,7 +4,9 @@ export function localeFromIntl(tag: string): SheetLocale {
   const numFmt = new Intl.NumberFormat(tag);
   const parts = numFmt.formatToParts(1234567.89);
   const decimalSeparator = parts.find(p => p.type === "decimal")?.value ?? ".";
-  const groupSeparator = parts.find(p => p.type === "group")?.value ?? ",";
+  const rawGroup = parts.find(p => p.type === "group")?.value ?? ",";
+  // Older ICU (Node 20 LTS on Linux) returns U+0027 (') for de-CH; normalize to U+2019 (')
+  const groupSeparator = rawGroup === "'" ? "’" : rawGroup;
 
   const dateFmt = new Intl.DateTimeFormat(tag, { year: "numeric", month: "2-digit", day: "2-digit" });
   const dateParts = dateFmt.formatToParts(new Date(2000, 0, 1));
