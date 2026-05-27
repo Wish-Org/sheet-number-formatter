@@ -1,5 +1,8 @@
 # @wish-org/sheet-number-formatter
 
+[![CI](https://github.com/Wish-Org/sheet-number-formatter/actions/workflows/ci.yml/badge.svg)](https://github.com/Wish-Org/sheet-number-formatter/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@wish-org/sheet-number-formatter)](https://www.npmjs.com/package/@wish-org/sheet-number-formatter)
+
 Format numbers and dates using the same format string syntax as Excel and Google Sheets.
 
 ```ts

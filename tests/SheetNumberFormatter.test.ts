@@ -55,6 +55,6 @@ describe("exports", () => {
 
   it("exports ParseError", () => {
     const err = new ParseError("test", "0", 0);
-    expect(err).toBeInstanceOf(Error);
+    expect(err).toBeInstanceOf(ParseError);
   });
 });

@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: 'Release notes (shown on the GitHub Release page, linked from npm)'
+        required: true
+        type: string
 
 jobs:
   test:
@@ -20,3 +26,41 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  release:
+    name: Release
+    needs: test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write    # push version
+      id-token: write    # OIDC token for npm Trusted Publishers
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted Publishers requires npm ≥ 11.5.1; Node 22 ships with npm 10.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      # setup-node writes _authToken=${NODE_AUTH_TOKEN} into .npmrc.
+      # With no token set, this empty value blocks OIDC Trusted Publishers.
+      # Remove it so npm falls through to OIDC for authentication.
+      - name: Clear auth token from npmrc
+        run: npm config delete "//registry.npmjs.org/:_authToken"
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
