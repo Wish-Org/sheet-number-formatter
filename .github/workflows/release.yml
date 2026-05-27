@@ -1,24 +1,33 @@
 name: Release
 
 on:
-  push:
-    branches: [main]
-
-# Only one release job at a time
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump'
+        required: true
+        type: choice
+        options: [patch, minor, major, custom]
+      custom_version:
+        description: 'Exact version (only when "custom" is selected above, e.g. 1.0.0)'
+        required: false
+        type: string
+      notes:
+        description: 'Release notes (shown on the GitHub Release page, linked from npm)'
+        required: true
+        type: string
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    environment: npm  # ties this job to the "npm" Trusted Publisher environment
+    environment: npm
     permissions:
-      contents: write       # push version bump commit + tags
-      pull-requests: write  # open/update the Release PR
-      id-token: write       # request OIDC token for npm Trusted Publishers
+      contents: write    # push version bump commit + tag, create GitHub Release
+      id-token: write    # OIDC token for npm Trusted Publishers
+
     steps:
       - uses: actions/checkout@v4
-        # Full history needed so changesets can diff tags correctly
         with:
           fetch-depth: 0
 
@@ -29,15 +38,40 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - run: npm ci
+
+      - name: Configure git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        run: |
+          if [ "${{ inputs.version }}" = "custom" ]; then
+            npm version "${{ inputs.custom_version }}" --no-git-tag-version
+          else
+            npm version "${{ inputs.version }}" --no-git-tag-version
+          fi
+
+      - name: Read new version
+        id: pkg
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
       - run: npm run build
 
-      - name: Create Release PR or Publish to npm
-        uses: changesets/action@v1
-        with:
-          # Command run when the Release PR is merged
-          publish: npm publish
-          # Optional: customise the PR title / commit message
-          title: "chore: release packages"
-          commit: "chore: release packages"
+      - name: Publish to npm
+        run: npm publish --access public
+
+      - name: Commit and tag
+        run: |
+          git add package.json package-lock.json
+          git commit -m "chore: release v${{ steps.pkg.outputs.version }}"
+          git tag "v${{ steps.pkg.outputs.version }}"
+          git push --follow-tags
+
+      - name: Create GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.pkg.outputs.version }}" \
+            --title "v${{ steps.pkg.outputs.version }}" \
+            --notes "${{ inputs.notes }}"
