@@ -65,7 +65,7 @@ jobs:
       - run: npm run build
 
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@10
 
       - name: Debug npm auth
         run: |
