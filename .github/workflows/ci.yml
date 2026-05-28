@@ -5,22 +5,17 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-    inputs:
-      notes:
-        description: 'Release notes (shown on the GitHub Release page, linked from npm)'
-        required: true
-        type: string
 
 jobs:
   test:
     name: Test & Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - run: npm ci
