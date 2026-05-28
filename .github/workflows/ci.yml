@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  id-token: write    # Required for OIDC (npm Trusted Publishers)
+  contents: read
+
 jobs:
   test:
     name: Test & Build
@@ -25,10 +29,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: npm
-    permissions:
-      id-token: write    # OIDC token for npm Trusted Publishers
-      contents: read    # push version
-
     steps:
       - uses: actions/checkout@v6
         
