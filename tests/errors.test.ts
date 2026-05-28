@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { ParseError } from "../src/errors.js";
 
 describe("ParseError", () => {
-  it("is an instance of Error", () => {
+  it("is an instance of ParseError", () => {
     const err = new ParseError("bad token", "0.0@", 3);
-    expect(err).toBeInstanceOf(Error);
+    expect(err).toBeInstanceOf(ParseError);
   });
 
   it("exposes formatString and position", () => {

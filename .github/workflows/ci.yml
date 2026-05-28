@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: 'Release notes (shown on the GitHub Release page, linked from npm)'
+        required: true
+        type: string
 
 jobs:
   test:
@@ -20,3 +26,29 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  release:
+    name: Release
+    needs: test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write    # push version
+      id-token: write    # OIDC token for npm Trusted Publishers
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false  # never use caching in release builds
+
+     
+      - run: npm ci
+      - run: npm run build --if-present
+
+      - name: Publish to npm
+        run: npm publish

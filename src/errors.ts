@@ -1,10 +1,11 @@
-export class ParseError extends Error {
+export class ParseError {
+  readonly message: string;
+
   constructor(
     message: string,
     readonly formatString: string,
     readonly position: number,
   ) {
-    super(`${message} at position ${position} in "${formatString}"`);
-    this.name = "ParseError";
+    this.message = `${message} at position ${position} in "${formatString}"`;
   }
 }
