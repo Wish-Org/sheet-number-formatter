@@ -7,27 +7,50 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Test Build Publish
+  test:
+    name: Test & Build
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write    # OIDC token for npm Trusted Publishers
-    environment: ${{ github.event_name == 'workflow_dispatch' && 'npm' || '' }}
-
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
-          cache: ${{ github.event_name != 'workflow_dispatch' && 'npm' || '' }}
-          package-manager-cache: ${{ github.event_name != 'workflow_dispatch' }}
 
       - run: npm ci
       - run: npm test
       - run: npm run build
 
+  release:
+    name: Release
+    needs: test
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write    # push version
+      id-token: write    # OIDC token for npm Trusted Publishers
+
+    steps:
+      - uses: actions/checkout@v6
+        
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      # Trusted Publishers requires npm ≥ 11.5.1; Node 22 ships with npm 10.
+      # - name: Upgrade npm
+      #   run: npm install -g npm@latest
+
+      # setup-node writes _authToken=${NODE_AUTH_TOKEN} into .npmrc.
+      # With no token set, this empty value blocks OIDC Trusted Publishers.
+      # Remove it so npm falls through to OIDC for authentication.
+      - name: Clear auth token from npmrc
+        run: npm config delete "//registry.npmjs.org/:_authToken"
+
+      - run: npm ci
+
+      - run: npm run build
+
       - name: Publish to npm
-        if: github.event_name == 'workflow_dispatch'
-        run: npm publish --access public
+        run: npm publish --provenance --access public
