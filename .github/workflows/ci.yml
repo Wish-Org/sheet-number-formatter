@@ -15,8 +15,6 @@ jobs:
     name: Test Build Publish
     runs-on: ubuntu-latest
     
-    environment: ${{ github.event_name == 'workflow_dispatch' && 'npm' || '' }}
-
     steps:
       - uses: actions/checkout@v6
 
@@ -34,4 +32,3 @@ jobs:
       - name: Publish to npm
         if: github.event_name == 'workflow_dispatch'
         run: npm publish --access public
-
