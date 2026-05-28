@@ -9,13 +9,21 @@ export function formatNumeric(section: FormatSection, absValue: number | bigint,
 
   // Bigint: use string representation to preserve precision; no scaling/percent/fraction/scientific
   if (typeof absValue === "bigint") {
-    const intStr = absValue.toString();
+    const hasPercent = parts.some(p => p.kind === "percent");
+    const scaledValue = hasPercent ? absValue * 100n : absValue;
+    const intStr = scaledValue.toString();
     const decimalIdx = parts.findIndex(p => p.kind === "decimal");
     const intParts = decimalIdx === -1 ? parts : parts.slice(0, decimalIdx);
     const scalingCommas = countScalingCommas(parts);
     const hasGrouping = (parts.filter(p => p.kind === "group").length - scalingCommas) > 0;
     const intFormatted = formatInteger(intStr, intParts, hasGrouping, locale);
-    return wrapWithLiterals(parts, intFormatted);
+    let fracFormatted = "";
+    if (decimalIdx !== -1) {
+      const fracDigits = parts.slice(decimalIdx + 1).filter(p => p.kind === "digit") as DigitPart[];
+      fracFormatted = locale.decimalSeparator + formatDecimalFraction("0".repeat(fracDigits.length), fracDigits);
+    }
+    const numeric = intFormatted + fracFormatted + (hasPercent ? "%" : "");
+    return wrapWithLiterals(parts, numeric);
   }
 
   if (parts.some(p => p.kind === "scientific")) {
