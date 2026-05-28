@@ -29,6 +29,7 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      # bump version in package.json before publishing
       - name: Publish to npm
         if: github.event_name == 'workflow_dispatch'
         run: npm publish --access public
