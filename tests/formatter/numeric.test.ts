@@ -3,10 +3,10 @@ import { formatNumeric } from "../../src/formatter/numeric.js";
 import { parse } from "../../src/parser/parse.js";
 import { enUS } from "../../src/locale/enUS.js";
 
-function fmt(format: string, value: number) {
+function fmt(format: string, value: number | bigint) {
   const ast = parse(format);
   if (ast.kind !== "sections") throw new Error("expected sections");
-  return formatNumeric(ast.sections[0], Math.abs(value), enUS);
+  return formatNumeric(ast.sections[0], value, enUS);
 }
 
 describe("formatNumeric — digit placeholders", () => {
@@ -50,7 +50,8 @@ describe("formatNumeric — grouping", () => {
   });
 
   it("###,##0.00 formats correctly", () => {
-    expect(fmt("###,##0.00", 12345.6)).toBe("12,345.60");
+      expect(fmt("###,##0.00", 12345.6)).toBe("12,345.60");
+      expect(fmt("###,##0.00", 12345)).toBe("12,345.00");
   });
 });
 
@@ -68,5 +69,40 @@ describe("formatNumeric — percent", () => {
   it("0% multiplies by 100 and appends %", () => {
     expect(fmt("0%", 0.5)).toBe("50%");
     expect(fmt("0.00%", 0.1234)).toBe("12.34%");
+    expect(fmt("0%", 2)).toBe("200%");
+  });
+});
+
+describe("formatNumeric — bigint", () => {
+  it("digit placeholders behave like number", () => {
+    expect(fmt("0", 0n)).toBe("0");
+    expect(fmt("0", 5n)).toBe("5");
+    expect(fmt("00", 5n)).toBe("05");
+    expect(fmt("#", 0n)).toBe("");
+    expect(fmt("?", 0n)).toBe(" ");
+  });
+
+  it("grouping separator applies", () => {
+    expect(fmt("#,##0", 1234567n)).toBe("1,234,567");
+    expect(fmt("#,##0", 999n)).toBe("999");
+  });
+
+  it("0 decimal placeholders render as zeros", () => {
+    expect(fmt("0.00", 5n)).toBe("5.00");
+    expect(fmt("0.000", 12n)).toBe("12.000");
+    expect(fmt("###,##0.00", 12345n)).toBe("12,345.00");
+  });
+
+  it("# decimal placeholders suppress trailing zeros", () => {
+    expect(fmt("0.##", 5n)).toBe("5.");
+  });
+
+  it("percent multiplies by 100 and supports decimal placeholders", () => {
+    expect(fmt("0%", 2n)).toBe("200%");
+    expect(fmt("0.00%", 2n)).toBe("200.00%");
+  });
+
+  it("preserves precision beyond Number.MAX_SAFE_INTEGER", () => {
+    expect(fmt("#,##0", 9007199254740993n)).toBe("9,007,199,254,740,993");
   });
 });
