@@ -136,16 +136,16 @@ describe("serial date 1904 mode", () => {
   it.todo("format(61,'dd/mm/yyyy', isDate1904=true) → '02/03/1904'");
 });
 
-// ─── date separator by locale ────────────────────────────────────────────────
+// ─── date separator as literal ───────────────────────────────────────────────
 
-describe("date separator — locale-specific replacement of /", () => {
+describe("date separator — / is always a literal", () => {
   const d = new Date(1978, 7, 17);
-  it("da-DK: DD/MM/YYYY → '17.08.1978'", () =>
-    expect(fl("DD/MM/YYYY", d, localeFromIntl("da-DK"))).toBe("17.08.1978"));
+  it("da-DK: DD/MM/YYYY → '17/08/1978'", () =>
+    expect(fl("DD/MM/YYYY", d, localeFromIntl("da-DK"))).toBe("17/08/1978"));
   it("en-US: DD/MM/YYYY → '17/08/1978'", () =>
     expect(fl("DD/MM/YYYY", d, localeFromIntl("en-US"))).toBe("17/08/1978"));
-  it("bg-BG: DD/MM/YYYY → '17.08.1978'", () =>
-    expect(fl("DD/MM/YYYY", d, localeFromIntl("bg-BG"))).toBe("17.08.1978"));
-  it("nb-NO: DD/MM/YYYY → '17.08.1978'", () =>
-    expect(fl("DD/MM/YYYY", d, localeFromIntl("nb-NO"))).toBe("17.08.1978"));
+  it("bg-BG: DD/MM/YYYY → '17/08/1978'", () =>
+    expect(fl("DD/MM/YYYY", d, localeFromIntl("bg-BG"))).toBe("17/08/1978"));
+  it("nb-NO: DD/MM/YYYY → '17/08/1978'", () =>
+    expect(fl("DD/MM/YYYY", d, localeFromIntl("nb-NO"))).toBe("17/08/1978"));
 });

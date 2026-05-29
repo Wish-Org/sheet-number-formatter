@@ -8,10 +8,6 @@ export function localeFromIntl(tag: string): SheetLocale {
   // Older ICU (Node 20 LTS on Linux) returns U+0027 (') for de-CH; normalize to U+2019 (')
   const groupSeparator = rawGroup === "'" ? "’" : rawGroup;
 
-  const dateFmt = new Intl.DateTimeFormat(tag, { year: "numeric", month: "2-digit", day: "2-digit" });
-  const dateParts = dateFmt.formatToParts(new Date(2000, 0, 1));
-  const dateSeparator = dateParts.find(p => p.type === "literal")?.value?.trim() ?? "/";
-
   const monthNames: string[] = [];
   const shortMonthNames: string[] = [];
   const singleLetterMonthNames: string[] = [];
@@ -40,7 +36,6 @@ export function localeFromIntl(tag: string): SheetLocale {
   return {
     decimalSeparator,
     groupSeparator,
-    dateSeparator,
     monthNames,
     shortMonthNames,
     singleLetterMonthNames,

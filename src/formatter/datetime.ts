@@ -11,8 +11,7 @@ export function formatDateTime(section: FormatSection, date: Date, locale: Sheet
     const p = parts[i];
 
     if (p.kind === "literal") {
-      // Replace date separator "/" with locale-specific character
-      result += p.value === "/" ? locale.dateSeparator : p.value;
+      result += p.value;
       prevWasGroup = false;
       continue;
     }

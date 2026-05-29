@@ -17,7 +17,7 @@ export type Token =
   | { type: "currency"; symbol: string; pos: number }
   | { type: "scientific"; forceSign: boolean; digits: string; pos: number };
 
-const DATE_TOKENS = ["yyyy","yy","mmmm","mmm","mm","m","dddd","ddd","dd","d","hh","h","ss","s"];
+const DATE_TOKENS = ["yyyy","yy","y","mmmm","mmm","mm","m","dddd","ddd","dd","d","hh","h","ss","s"];
 
 export function tokenize(fmt: string): Token[] {
   const tokens: Token[] = [];
@@ -104,6 +104,13 @@ export function tokenize(fmt: string): Token[] {
       continue;
     }
 
+    // "General" keyword (case-insensitive)
+    if (fmt.slice(i, i + 7).toLowerCase() === "general") {
+      tokens.push({ type: "literal", value: "General", pos });
+      i += 7;
+      continue;
+    }
+
     // Date tokens (longest match first)
     let matched = false;
     for (const dt of DATE_TOKENS) {
@@ -143,6 +150,8 @@ export function tokenize(fmt: string): Token[] {
       tokens.push({ type: "percent", pos });
     } else if (ch === "@") {
       tokens.push({ type: "text-placeholder", pos });
+    } else if (/[a-zA-Z]/.test(ch)) {
+      throw new ParseError(`Unquoted letter '${ch}' is not a valid format token — wrap literal text in double quotes`, fmt, pos);
     } else {
       tokens.push({ type: "literal", value: ch, pos });
     }

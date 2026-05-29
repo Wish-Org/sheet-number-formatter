@@ -5,7 +5,6 @@ describe("enUS locale", () => {
   it("has correct separators", () => {
     expect(enUS.decimalSeparator).toBe(".");
     expect(enUS.groupSeparator).toBe(",");
-    expect(enUS.dateSeparator).toBe("/");
   });
 
   it("has 12 month names", () => {

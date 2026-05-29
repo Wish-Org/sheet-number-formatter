@@ -41,6 +41,16 @@ describe("SheetNumberFormatter.compile — failure", () => {
       expect(result.errors[0]).toBeInstanceOf(ParseError);
     }
   });
+
+  it("returns isSuccess false for unquoted literal text", () => {
+    const result = snf.compile("abc");
+    expect(result.isSuccess).toBe(false);
+    if (!result.isSuccess) {
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toBeInstanceOf(ParseError);
+    }
+  });
+
 });
 
 describe("exports", () => {

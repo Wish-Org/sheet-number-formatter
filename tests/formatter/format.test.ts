@@ -30,7 +30,7 @@ describe("formatValue — section selection", () => {
   });
 
   it("3 sections: section 2 for zero", () => {
-    expect(f("0;-0;zero", 0)).toBe("zero");
+    expect(f('0;-0;"zero"', 0)).toBe("zero");
   });
 
   it("conditional section: [>1000] matches", () => {
