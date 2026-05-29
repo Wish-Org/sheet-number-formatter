@@ -38,4 +38,9 @@ describe("enUS locale", () => {
     expect(enUS.amLabel).toBe("AM");
     expect(enUS.pmLabel).toBe("PM");
   });
+
+  it("has short AM/PM labels", () => {
+    expect(enUS.shortAmLabel).toBe("A");
+    expect(enUS.shortPmLabel).toBe("P");
+  });
 });

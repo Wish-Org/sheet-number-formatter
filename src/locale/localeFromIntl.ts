@@ -32,6 +32,8 @@ export function localeFromIntl(tag: string): SheetLocale {
   const pmParts = timeFmt.formatToParts(new Date(2000, 0, 1, 18));
   const amLabel = amParts.find(p => p.type === "dayPeriod")?.value ?? "AM";
   const pmLabel = pmParts.find(p => p.type === "dayPeriod")?.value ?? "PM";
+  const shortAmLabel = (amLabel[0] ?? "A").toUpperCase();
+  const shortPmLabel = (pmLabel[0] ?? "P").toUpperCase();
 
   return {
     decimalSeparator,
@@ -43,5 +45,7 @@ export function localeFromIntl(tag: string): SheetLocale {
     shortDayNames,
     amLabel,
     pmLabel,
+    shortAmLabel,
+    shortPmLabel,
   };
 }

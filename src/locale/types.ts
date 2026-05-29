@@ -8,4 +8,6 @@ export interface SheetLocale {
   shortDayNames: string[];
   amLabel: string;
   pmLabel: string;
+  shortAmLabel: string;
+  shortPmLabel: string;
 }

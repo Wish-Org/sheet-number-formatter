@@ -61,8 +61,13 @@ describe("datetime corpus", () => {
   it("hh:mm:ss AM/PM at noon | 2020-01-01 12:35:55", () =>
     expect(f("m/d/yyyy\\ hh:mm:ss AM/PM", new Date(2020, 0, 1, 12, 35, 55))).toBe("1/1/2020 12:35:55 PM"));
 
+  //uppercase A/P variants
   it("A/P | 2020-01-01 14:35:55", () =>
-    expect(f("m/d/yyyy\\ h:mm:ss A/P", new Date(2020, 0, 1, 14, 35, 55))).toBe("1/1/2020 2:35:55 P"));
+    expect(f("m/d/yyyy\\ h:mm:ss A/P", new Date(2020, 0, 1, 14, 35, 55))).toBe("1/1/2020 2:35:55 P")); 
+
+  //lowercase a/p variants
+  it("a/p | 2020-01-01 14:35:55", () =>
+    expect(f("m/d/yyyy\\ h:mm:ss a/p", new Date(2020, 0, 1, 14, 35, 55))).toBe("1/1/2020 2:35:55 p"));
 });
 
 // ─── case-insensitive AM/PM variants ─────────────────────────────────────────
