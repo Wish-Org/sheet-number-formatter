@@ -50,4 +50,32 @@ describe("formatDateTime", () => {
     expect(fmt("h A/P", D)).toBe("2 P");
     expect(fmt("h A/P", MIDNIGHT)).toBe("12 A");
   });
+
+  // Year tokens
+  it("yyyy formats 4-digit year", () => expect(fmt("yyyy", D)).toBe("2024"));
+  it("yyy formats 4-digit year (alias for yyyy)", () => expect(fmt("yyy", D)).toBe("2024"));
+  it("yy formats 2-digit year", () => expect(fmt("yy", D)).toBe("24"));
+  it("y formats 2-digit year (alias for yy)", () => expect(fmt("y", D)).toBe("24"));
+
+  // mmmmm — first letter of month name
+  it("mmmmm formats first letter of month", () => expect(fmt("mmmmm", D)).toBe("M"));
+  it("mmmmm in context", () => expect(fmt("mmmmm/dd/yyyy", D)).toBe("M/15/2024"));
+
+  // am/pm and a/p with surrounding literal text
+  it("am/pm lowercase in format", () => {
+    expect(fmt("h:mm am/pm", D)).toBe("2:05 PM");
+    expect(fmt("h:mm am/pm", MIDNIGHT)).toBe("12:00 AM");
+  });
+  it("AM/PM uppercase in format", () => {
+    expect(fmt("h:mm AM/PM", D)).toBe("2:05 PM");
+  });
+  it("a/p lowercase shows lowercase a or p", () => {
+    expect(fmt("h a/p", D)).toBe("2 p");
+    expect(fmt("h a/p", MIDNIGHT)).toBe("12 a");
+  });
+
+  // Fractional seconds
+  it(".0 formats tenths of seconds", () => expect(fmt("ss.0", D)).toBe("09.1"));
+  it(".00 formats hundredths of seconds", () => expect(fmt("ss.00", D)).toBe("09.12"));
+  it(".000 formats milliseconds", () => expect(fmt("ss.000", D)).toBe("09.123"));
 });

@@ -14,8 +14,8 @@ export type Condition = {
 };
 
 export type DateToken =
-  | "yyyy" | "yy"
-  | "mmmm" | "mmm" | "mm" | "m"
+  | "yyyy" | "yyy" | "yy" | "y"
+  | "mmmmm" | "mmmm" | "mmm" | "mm" | "m"
   | "dddd" | "ddd" | "dd" | "d"
   | "hh" | "h"
   | "ss" | "s"

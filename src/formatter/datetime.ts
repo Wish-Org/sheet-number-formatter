@@ -84,8 +84,11 @@ function formatDateToken(
   const hour = hasAmPm ? h12 : h24;
 
   switch (token) {
-    case "yyyy": return String(y);
-    case "yy":   return String(y).slice(-2);
+    case "yyyy":
+    case "yyy":  return String(y);
+    case "yy":
+    case "y":    return String(y).slice(-2);
+    case "mmmmm": return isMinute ? String(min)[0] : locale.monthNames[mo][0];
     case "mmmm": return isMinute ? pad2(min) : locale.monthNames[mo];
     case "mmm":  return isMinute ? pad2(min) : locale.shortMonthNames[mo];
     case "mm":   return isMinute ? pad2(min) : pad2(mo + 1);
