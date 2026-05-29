@@ -10,4 +10,6 @@ export const enUS: SheetLocale = {
   shortDayNames: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
   amLabel: "AM",
   pmLabel: "PM",
+  shortAmLabel: "A",
+  shortPmLabel: "P",
 };
