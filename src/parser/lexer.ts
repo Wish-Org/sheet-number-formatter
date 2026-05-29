@@ -17,7 +17,7 @@ export type Token =
   | { type: "currency"; symbol: string; pos: number }
   | { type: "scientific"; forceSign: boolean; digits: string; pos: number };
 
-const DATE_TOKENS = ["yyyy","yy","y","mmmm","mmm","mm","m","dddd","ddd","dd","d","hh","h","ss","s"];
+const DATE_TOKENS = ["yyyy","yyy","yy","y","mmmmm","mmmm","mmm","mm","m","dddd","ddd","dd","d","hh","h","ss","s"];
 
 export function tokenize(fmt: string): Token[] {
   const tokens: Token[] = [];
