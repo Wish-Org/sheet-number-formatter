@@ -50,7 +50,7 @@ export function formatNumeric(section: FormatSection, absValue: number | bigint,
   const factor = Math.pow(10, decimalPlaces);
   const rounded = Math.round((value + Number.EPSILON) * factor) / factor;
 
-  const intStr = Math.floor(Math.abs(rounded)).toString();
+  const intStr = intToDecimalString(Math.floor(Math.abs(rounded)));
 
   const totalGroups = parts.filter(p => p.kind === "group").length;
   const hasGrouping = (totalGroups - scalingCommas) > 0;
@@ -258,6 +258,14 @@ function bestFraction(frac: number, maxDen: number): [number, number] {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// Convert a non-negative integer-valued number to a plain decimal string.
+// Numbers >= 1e21 stringify in exponential notation (e.g. "3.5e+22"); BigInt
+// expands them to full digits so the integer formatter sees real digits.
+function intToDecimalString(n: number): string {
+  if (n < 1e21) return n.toString();
+  return BigInt(n).toString();
+}
 
 function countScalingCommas(parts: FormatPart[]): number {
   let count = 0;

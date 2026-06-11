@@ -23,3 +23,13 @@ describe("scientific notation", () => {
     expect(fmt("##0.0E+0", 1230000)).toBe("1.2E+6");
   });
 });
+
+describe("large numbers without scientific format", () => {
+  it("0 does not use scientific notation for numbers >= 1e21", () => {
+    expect(fmt("0", 35260653000268690400000)).toBe("35260653000268691013632");
+  });
+
+  it("#,##0 groups large numbers without scientific notation", () => {
+    expect(fmt("#,##0", 1e21)).toBe("1,000,000,000,000,000,000,000");
+  });
+});
