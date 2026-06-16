@@ -22,7 +22,7 @@ export function formatNumeric(section: FormatSection, absValue: number | bigint,
       const fracDigits = parts.slice(decimalIdx + 1).filter(p => p.kind === "digit") as DigitPart[];
       fracFormatted = locale.decimalSeparator + formatDecimalFraction("0".repeat(fracDigits.length), fracDigits);
     }
-    const numeric = intFormatted + fracFormatted + (hasPercent ? "%" : "");
+    const numeric = intFormatted + fracFormatted;
     return wrapWithLiterals(parts, numeric);
   }
 
@@ -65,8 +65,7 @@ export function formatNumeric(section: FormatSection, absValue: number | bigint,
     fracFormatted = locale.decimalSeparator + formatDecimalFraction(fracRaw, fracDigits);
   }
 
-  let numeric = intFormatted + fracFormatted;
-  if (hasPercent) numeric += "%";
+  const numeric = intFormatted + fracFormatted;
 
   return wrapWithLiterals(parts, numeric);
 }
@@ -336,12 +335,16 @@ function wrapWithLiterals(parts: FormatPart[], numeric: string): string {
 
   for (const p of parts) {
     const isNumeric = p.kind === "digit" || p.kind === "decimal" ||
-      p.kind === "group" || p.kind === "percent" || p.kind === "scientific";
+      p.kind === "group" || p.kind === "scientific";
     if (isNumeric) {
       inNumericZone = true;
     } else if (p.kind === "literal") {
       if (!inNumericZone) before += p.value;
       else after += p.value;
+    } else if (p.kind === "percent") {
+      // The percent sign renders at its literal position (e.g. "%0" → "%200").
+      if (!inNumericZone) before += "%";
+      else after += "%";
     }
   }
 

@@ -70,6 +70,36 @@ describe("formatNumeric — percent", () => {
     expect(fmt("0%", 0.5)).toBe("50%");
     expect(fmt("0.00%", 0.1234)).toBe("12.34%");
     expect(fmt("0%", 2)).toBe("200%");
+    expect(fmt("0 %", 2)).toBe("200 %");
+    expect(fmt("%0", 2)).toBe("%200");
+    expect(fmt("% 0", 0.5)).toBe("% 50");
+  });
+
+  it("renders % at its position relative to digits", () => {
+    expect(fmt("%0.00", 0.1234)).toBe("%12.34");
+    expect(fmt("0.00%", 0.1234)).toBe("12.34%");
+  });
+
+  it("rounds the scaled value", () => {
+    expect(fmt("0%", 0.005)).toBe("1%");
+    expect(fmt("0.00%", 0.123456)).toBe("12.35%");
+  });
+
+  it("handles many digits and grouping", () => {
+    expect(fmt("0%", 12.5)).toBe("1250%");
+    expect(fmt("0.0%", 1234.5)).toBe("123450.0%");
+    expect(fmt("#,##0%", 12.3456)).toBe("1,235%");
+    expect(fmt("00.0%", 0.05)).toBe("05.0%");
+  });
+
+  it("handles zero", () => {
+    expect(fmt("0%", 0)).toBe("0%");
+    expect(fmt("#%", 0)).toBe("%");
+  });
+
+  it("combines with literals", () => {
+    expect(fmt('"discount "0%', 0.25)).toBe("discount 25%");
+    expect(fmt('0%" off"', 0.25)).toBe("25% off");
   });
 });
 
