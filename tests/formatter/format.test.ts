@@ -47,3 +47,19 @@ describe("formatValue — bigint", () => {
     expect(f("0", 12345n)).toBe("12345");
   });
 });
+
+describe("formatValue — negative percent", () => {
+  it("prefixes minus sign with single section", () => {
+    expect(f("0%", -0.5)).toBe("-50%");
+    expect(f("0.00%", -0.1234)).toBe("-12.34%");
+    expect(f("%0", -2)).toBe("-%200");
+  });
+
+  it("uses negative section when provided", () => {
+    expect(f("0%;(0%)", -0.5)).toBe("(50%)");
+  });
+
+  it("combines minus sign with literals", () => {
+    expect(f('"x "0%', -0.25)).toBe("-x 25%");
+  });
+});
